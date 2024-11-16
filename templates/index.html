@@ -347,6 +347,81 @@
 								.map((rec) => `<li>${rec}</li>`)
 								.join("");
 
+							// Add download button if it doesn't exist
+							let downloadButton = document.getElementById("downloadReport");
+							if (!downloadButton) {
+								downloadButton = document.createElement("button");
+								downloadButton.id = "downloadReport";
+								downloadButton.className =
+									"w-full mt-4 bg-pink-600 text-white py-3 rounded-2xl hover:bg-pink-700 transition-colors flex items-center justify-center";
+								downloadButton.innerHTML =
+									'<i class="fa fa-download mr-2"></i> Download Report';
+
+								// Add click event listener for download
+								downloadButton.addEventListener("click", async () => {
+									try {
+										// Show loading state on button
+										downloadButton.disabled = true;
+										downloadButton.innerHTML =
+											'<i class="fa fa-spinner fa-spin mr-2"></i> Generating Report...';
+
+										// Prepare data for PDF generation
+										const reportData = {
+											patient_data: {
+												name: formData.get("name"),
+												contact: formData.get("contact"),
+												age: formData.get("username"),
+											},
+											prediction: result.prediction,
+										};
+
+										// Request PDF generation
+										const pdfResponse = await fetch("/download-report", {
+											method: "POST",
+											headers: {
+												"Content-Type": "application/json",
+											},
+											body: JSON.stringify(reportData),
+										});
+
+										if (pdfResponse.ok) {
+											// Convert response to blob
+											const blob = await pdfResponse.blob();
+
+											// Create download link
+											const url = window.URL.createObjectURL(blob);
+											const a = document.createElement("a");
+											a.href = url;
+											a.download = `DR_Report_${reportData.patient_data.name.replace(
+												/\s+/g,
+												"_",
+											)}_${new Date().toISOString().split("T")[0]}.pdf`;
+
+											// Trigger download
+											document.body.appendChild(a);
+											a.click();
+
+											// Cleanup
+											window.URL.revokeObjectURL(url);
+											a.remove();
+										} else {
+											throw new Error("Failed to generate PDF");
+										}
+									} catch (error) {
+										console.error("Error generating PDF:", error);
+										alert("Failed to generate PDF report. Please try again.");
+									} finally {
+										// Reset button state
+										downloadButton.disabled = false;
+										downloadButton.innerHTML =
+											'<i class="fa fa-download mr-2"></i> Download Report';
+									}
+								});
+
+								// Add button to results container
+								predictionResult.appendChild(downloadButton);
+							}
+
 							predictionResult.style.display = "block";
 
 							// Reset form
