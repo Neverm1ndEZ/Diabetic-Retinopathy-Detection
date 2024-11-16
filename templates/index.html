@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+		/>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<title>i-Help</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				font-family: "Poppins", sans-serif;
+			}
+
+			.header {
+				min-height: 100vh;
+				width: 100%;
+				background-color: #1b1b1e;
+				background-image: radial-gradient(
+						at 0% 0%,
+						hsla(253, 16%, 7%, 1) 0,
+						transparent 50%
+					),
+					radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+					radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+			}
+
+			.prediction-result {
+				display: none;
+				background-color: rgba(43, 42, 42, 0.5);
+				border-radius: 10px;
+				padding: 20px;
+				margin-top: 20px;
+				color: white;
+			}
+
+			.loading {
+				display: none;
+				text-align: center;
+				margin-top: 20px;
+				color: white;
+			}
+
+			.spinner {
+				border: 4px solid rgba(255, 255, 255, 0.3);
+				border-radius: 50%;
+				border-top: 4px solid white;
+				width: 40px;
+				height: 40px;
+				animation: spin 1s linear infinite;
+				margin: 20px auto;
+			}
+
+			@keyframes spin {
+				0% {
+					transform: rotate(0deg);
+				}
+
+				100% {
+					transform: rotate(360deg);
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<section class="header min-h-screen">
+			<nav class="flex justify-between items-center p-8">
+				<a href="" class="flex items-center">
+					<img src="static/logo.png" class="w-[70px] h-[40px]" />
+					<img src="static/ss.png" class="w-[100px] h-[40px] rounded-2xl" />
+				</a>
+			</nav>
+
+			<div class="text-center text-white mt-4">
+				<h1 class="text-3xl font-light">Your Personal Eyecare Buddy</h1>
+				<p class="text-gray-400 mt-4">
+					With modern technology and deep learning model<br />
+					we provide patients with quick information<br />
+					about their current stage of diabetic retinopathy<br />
+					by analyzing their eye scans
+				</p>
+			</div>
+
+			<div class="max-w-xl mx-auto mt-16 p-4">
+				<h2 class="text-2xl text-white text-center mb-4">
+					Enter User's details:
+				</h2>
+				<p class="text-gray-400 text-center mb-8">
+					A quick diabetic retinopathy test just a click away...
+				</p>
+
+				<form
+					id="predictionForm"
+					action="/"
+					method="post"
+					enctype="multipart/form-data"
+					class="bg-opacity-50 bg-gray-800 p-8 rounded-3xl shadow-lg"
+				>
+					<div class="space-y-4">
+						<input
+							type="text"
+							name="name"
+							placeholder="Enter Patient's name"
+							required
+							class="w-full p-3 rounded-2xl bg-gray-700 text-white placeholder-gray-400"
+						/>
+
+						<input
+							type="text"
+							name="contact"
+							placeholder="Enter contact no"
+							required
+							class="w-full p-3 rounded-2xl bg-gray-700 text-white placeholder-gray-400"
+						/>
+
+						<input
+							type="number"
+							name="username"
+							placeholder="Enter age"
+							required
+							class="w-full p-3 rounded-2xl bg-gray-700 text-white placeholder-gray-400"
+						/>
+
+						<div>
+							<label class="block text-white text-sm mb-2"
+								>Upload eye scan</label
+							>
+							<input
+								type="file"
+								name="imagefile"
+								required
+								class="w-full p-3 rounded-2xl bg-gray-700 text-white"
+							/>
+						</div>
+					</div>
+
+					<button
+						type="submit"
+						class="w-full mt-6 bg-pink-600 text-white py-3 rounded-2xl hover:bg-pink-700 transition-colors"
+					>
+						Predict
+					</button>
+				</form>
+
+				<div id="loading" class="loading">
+					<div class="spinner"></div>
+					<p>Processing your eye scan...</p>
+				</div>
+
+				<div id="predictionResult" class="prediction-result">
+					<h3 class="text-xl font-semibold mb-4">Prediction Results</h3>
+					<p id="predictionStage" class="mb-2"></p>
+					<div id="recommendations" class="mt-4">
+						<h4 class="text-lg font-semibold mb-2">Recommendations:</h4>
+						<ul id="recommendationsList" class="list-disc pl-5 space-y-2"></ul>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<script>
+			document
+				.getElementById("predictionForm")
+				.addEventListener("submit", async (e) => {
+					e.preventDefault();
+
+					// Show loading
+					document.getElementById("loading").style.display = "block";
+					document.getElementById("predictionResult").style.display = "none";
+
+					const formData = new FormData(e.target);
+
+					try {
+						const response = await fetch("/", {
+							method: "POST",
+							body: formData,
+						});
+
+						const result = await response.json();
+
+						// Hide loading
+						document.getElementById("loading").style.display = "none";
+
+						if (result.success) {
+							// Show result
+							const predictionResult =
+								document.getElementById("predictionResult");
+							const predictionStage =
+								document.getElementById("predictionStage");
+							const recommendationsList = document.getElementById(
+								"recommendationsList",
+							);
+
+							// Update prediction stage
+							predictionStage.textContent = `Diabetic Retinopathy Stage: ${result.prediction.stage}`;
+
+							// Update recommendations
+							recommendationsList.innerHTML = result.prediction.recommendations
+								.map((rec) => `<li>${rec}</li>`)
+								.join("");
+
+							predictionResult.style.display = "block";
+
+							// Reset form
+							e.target.reset();
+						} else {
+							alert(
+								result.error ||
+									"An error occurred during prediction. Please try again.",
+							);
+						}
+					} catch (error) {
+						console.error("Error:", error);
+						document.getElementById("loading").style.display = "none";
+						alert(
+							"An error occurred while processing your request. Please try again.",
+						);
+					}
+				});
+		</script>
+	</body>
+</html>
