@@ -64,10 +64,118 @@
 				0% {
 					transform: rotate(0deg);
 				}
-
 				100% {
 					transform: rotate(360deg);
 				}
+			}
+
+			/* Chatbot Styles */
+			.chat-widget {
+				position: fixed;
+				bottom: 20px;
+				right: 20px;
+				z-index: 1000;
+			}
+
+			.chat-button {
+				width: 60px;
+				height: 60px;
+				border-radius: 50%;
+				background-color: #e91e63;
+				color: white;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				cursor: pointer;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+				transition: all 0.3s ease;
+			}
+
+			.chat-button:hover {
+				background-color: #d81b60;
+				transform: scale(1.05);
+			}
+
+			.chat-container {
+				display: none;
+				position: fixed;
+				bottom: 90px;
+				right: 20px;
+				width: 350px;
+				height: 500px;
+				background-color: #1b1b1e;
+				border-radius: 10px;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+				overflow: hidden;
+			}
+
+			.chat-header {
+				background-color: #e91e63;
+				color: white;
+				padding: 15px;
+				font-weight: 500;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			.chat-messages {
+				height: 380px;
+				overflow-y: auto;
+				padding: 15px;
+			}
+
+			.message {
+				margin-bottom: 10px;
+				padding: 10px;
+				border-radius: 10px;
+				max-width: 80%;
+			}
+
+			.bot-message {
+				background-color: rgba(43, 42, 42, 0.5);
+				color: white;
+				margin-right: auto;
+			}
+
+			.user-message {
+				background-color: #e91e63;
+				color: white;
+				margin-left: auto;
+			}
+
+			.chat-input {
+				display: flex;
+				padding: 15px;
+				background-color: rgba(43, 42, 42, 0.5);
+			}
+
+			.chat-input input {
+				flex: 1;
+				padding: 8px;
+				border: none;
+				border-radius: 20px;
+				margin-right: 10px;
+				background-color: rgba(255, 255, 255, 0.1);
+				color: white;
+			}
+
+			.chat-input input::placeholder {
+				color: rgba(255, 255, 255, 0.5);
+			}
+
+			.chat-input button {
+				background-color: #e91e63;
+				color: white;
+				border: none;
+				padding: 8px 15px;
+				border-radius: 20px;
+				cursor: pointer;
+				transition: background-color 0.3s ease;
+			}
+
+			.chat-input button:hover {
+				background-color: #d81b60;
 			}
 		</style>
 	</head>
@@ -164,6 +272,37 @@
 						<ul id="recommendationsList" class="list-disc pl-5 space-y-2"></ul>
 					</div>
 				</div>
+
+				<!-- Add Chatbot Widget -->
+				<div class="chat-widget">
+					<div class="chat-button" onclick="toggleChat()">
+						<i class="fa fa-comments fa-lg"></i>
+					</div>
+					<div class="chat-container" id="chatContainer">
+						<div class="chat-header">
+							<span>i-Help Assistant</span>
+							<i
+								class="fa fa-times"
+								onclick="toggleChat()"
+								style="cursor: pointer"
+							></i>
+						</div>
+						<div class="chat-messages" id="chatMessages">
+							<div class="message bot-message">
+								Hello! I'm your i-Help assistant. How can I help you today?
+							</div>
+						</div>
+						<div class="chat-input">
+							<input
+								type="text"
+								id="userInput"
+								placeholder="Type your message..."
+								onkeypress="handleKeyPress(event)"
+							/>
+							<button onclick="sendMessage()">Send</button>
+						</div>
+					</div>
+				</div>
 			</div>
 		</section>
 
@@ -226,6 +365,72 @@
 						);
 					}
 				});
+		</script>
+		<script>
+			function toggleChat() {
+				const chatContainer = document.getElementById("chatContainer");
+				chatContainer.style.display =
+					chatContainer.style.display === "none" ? "block" : "none";
+			}
+
+			function handleKeyPress(event) {
+				if (event.key === "Enter") {
+					sendMessage();
+				}
+			}
+
+			function sendMessage() {
+				const userInput = document.getElementById("userInput");
+				const message = userInput.value.trim();
+
+				if (message) {
+					appendMessage(message, "user");
+					userInput.value = "";
+
+					// Simulate bot response
+					setTimeout(() => {
+						const botResponse = getBotResponse(message);
+						appendMessage(botResponse, "bot");
+					}, 1000);
+				}
+			}
+
+			function appendMessage(message, sender) {
+				const chatMessages = document.getElementById("chatMessages");
+				const messageDiv = document.createElement("div");
+				messageDiv.className = `message ${sender}-message`;
+				messageDiv.textContent = message;
+				chatMessages.appendChild(messageDiv);
+				chatMessages.scrollTop = chatMessages.scrollHeight;
+			}
+
+			function getBotResponse(message) {
+				const lowerMessage = message.toLowerCase();
+
+				if (
+					lowerMessage.includes("hello") ||
+					lowerMessage.includes("hi") ||
+					lowerMessage.includes("hey")
+				) {
+					return "Hello! How can I assist you today?";
+				} else if (lowerMessage.includes("appointment")) {
+					return "To schedule an appointment, please fill out the form above or call us at our contact number.";
+				} else if (lowerMessage.includes("retinopathy")) {
+					return "Diabetic retinopathy is a diabetes complication that affects eyes. To check your condition, please upload your eye scan using our prediction tool above.";
+				} else if (
+					lowerMessage.includes("scan") ||
+					lowerMessage.includes("test")
+				) {
+					return "You can upload your eye scan through the form on this page. Our AI will analyze it and provide you with results instantly.";
+				} else if (
+					lowerMessage.includes("result") ||
+					lowerMessage.includes("report")
+				) {
+					return "Your test results will be displayed immediately after processing your eye scan.";
+				} else {
+					return "I apologize, I didn't quite understand that. Could you please rephrase your question? You can ask about appointments, eye scans, or test results.";
+				}
+			}
 		</script>
 	</body>
 </html>
